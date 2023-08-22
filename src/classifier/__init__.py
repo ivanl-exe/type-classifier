@@ -4,25 +4,26 @@ from toml import load
 from classifier.util.fetch import parse
 from classifier.custom.parser import custom
 from classifier.util.check import is_byte
-from classifier.util.remove import strip_protocol
+from classifier.util.domain import strip_protocol, extract_tld
+from idna import encode as idna_encode
 
 class Class:
-    def __init__(self, data, type: str) -> None:
-        self.data = data
+    def __init__(self, value, type: str) -> None:
+        self.value = value
         self.type = type
 
 class TypeClassifier:
-    UNKNOWN = MYSTERY = 'unknown'
     EMPTY = 'empty'
-    STRING = 'string'
-    NUMBER = 'number'
     CODE = 'code'
-    URL = "url"
-    EMAIL = 'email'
-    IP_ADDRESS = 'ip-address'
     HASHTAG = 'hashtag'
     USERNAME = 'username'
-
+    IP_ADDRESS = 'ip-address'
+    EMAIL = 'email'
+    URL = "url"
+    NUMBER = 'number'
+    ALPHA = 'alpha'
+    STRING = 'string'
+    
     def __init__(self, filepath: Union[tuple, str] = ('classifier', '/toml', '/config.toml')) -> None:
         if type(filepath) == tuple: filepath = conjoin(*filepath)
         self.filepath = filepath
@@ -54,13 +55,13 @@ class TypeClassifier:
         elif TypeClassifier.__is_email__(token, self.tlds): return TypeClassifier.EMAIL
         elif TypeClassifier.__is_url__(token, self.tlds): return TypeClassifier.URL
         elif TypeClassifier.__is_number__(token): return TypeClassifier.NUMBER
-        elif TypeClassifier.__is_string__(token): return TypeClassifier.STRING
-        return TypeClassifier.UNKNOWN
+        elif TypeClassifier.__is_alpha__(token): return TypeClassifier.ALPHA
+        return TypeClassifier.STRING
 
     def __is_empty__(token: str) -> bool:
         return len(token) == 0
     
-    def __is_string__(token: str) -> bool:
+    def __is_alpha__(token: str) -> bool:
         return token.isalpha()
     
     def __is_number__(token: str) -> bool:
@@ -71,7 +72,9 @@ class TypeClassifier:
     
     def __is_url__(token: str, tlds: list[str]) -> bool:
         domain = strip_protocol(token)
-        return domain[domain.find('.')+1:].upper() in tlds
+        tld = extract_tld(domain)
+        tld =  idna_encode(tld).decode('ascii') if len(tld) > 0 else tld
+        return tld.upper() in tlds
 
     def __is_email__(token: str, tlds: list[str]) -> bool:
         i = token.find('@')
@@ -89,8 +92,8 @@ class TypeClassifier:
 
     def classify(self, s: str) -> list[Class]:
         tokens = TypeClassifier.tokenise(s)
-        classroom = []
+        classes = []
         for token in tokens:
             type = self.decide(token)
-            classroom.append(Class(token, type))
-        return classroom
+            classes.append(Class(token, type))
+        return classes
