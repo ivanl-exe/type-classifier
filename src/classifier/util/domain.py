@@ -7,6 +7,9 @@ def strip_protocol(url: str) -> str:
     if url[:2] == '//': return url[2:]
     return url
 
+def format_protocol(protocol: str) -> str:
+  return protocol + '://'
+
 def extract_tld(domain: str) -> str:
     if '.' not in domain: return ''
     j = find_any(domain, ':/\\?#')

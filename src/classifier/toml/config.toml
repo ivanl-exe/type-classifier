@@ -1,2 +1,6 @@
 [tlds]
 url = "https://data.iana.org/TLD/tlds-alpha-by-domain.txt"
+
+[classifier.type]
+username = "https://twitter.com/{}"
+hashtag = "https://www.twitter.com/search?q={}"

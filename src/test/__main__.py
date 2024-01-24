@@ -16,6 +16,4 @@ if __name__ == '__main__':
     ]
     
     typeClassifier = TypeClassifier()
-    classes = typeClassifier.classify(' '.join(data))
-    for _class in classes:
-        print(f'"{_class.value}" is of type `{_class.type}`')
+    typeClassifier.classify()
